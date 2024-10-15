@@ -65,6 +65,7 @@ class FAQPage extends StatelessWidget {
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
+      foregroundColor: Colors.white,
       flexibleSpace: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -75,14 +76,20 @@ class FAQPage extends StatelessWidget {
         ),
       ),
       elevation: 0,
-      title: Text(
-        'EcoCalc',
-        style: GoogleFonts.poppins(
-          textStyle: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+      title: Row(
+        children: [
+          Icon(Icons.eco, color: Colors.greenAccent, size: 24),
+          SizedBox(width: 8),
+          Text(
+            'EcoCalc',
+            style: GoogleFonts.poppins(
+              textStyle: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
-        ),
+        ],
       ),
       actions: [
         IconButton(
@@ -109,9 +116,6 @@ class FAQPage extends StatelessWidget {
               child: _buildLogo(),
             ),
             _buildDrawerItem(context, Icons.home, 'Home'),
-            _buildDrawerItem(context, Icons.calculate, 'Calculator'),
-            _buildDrawerItem(context, Icons.info, 'About'),
-            _buildDrawerItem(context, Icons.lightbulb, 'Tips'),
             _buildDrawerItem(context, Icons.emoji_objects, 'Fun Facts'),
             _buildDrawerItem(context, Icons.question_answer, 'FAQ'),
           ],
@@ -143,9 +147,6 @@ class FAQPage extends StatelessWidget {
           _buildLogo(),
           SizedBox(height: 60),
           _buildNavItem(context, Icons.home, 'Home'),
-          _buildNavItem(context, Icons.calculate, 'Calculator'),
-          _buildNavItem(context, Icons.info, 'About'),
-          _buildNavItem(context, Icons.lightbulb, 'Tips'),
           _buildNavItem(context, Icons.emoji_objects, 'Fun Facts'),
           _buildNavItem(context, Icons.question_answer, 'FAQ'),
         ],

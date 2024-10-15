@@ -65,6 +65,7 @@ class FunFactPage extends StatelessWidget {
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
+      foregroundColor: Colors.white,
       flexibleSpace: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -75,23 +76,22 @@ class FunFactPage extends StatelessWidget {
         ),
       ),
       elevation: 0,
-      title: Text(
-        'EcoCalc',
-        style: GoogleFonts.poppins(
-          textStyle: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+      title: Row(
+        children: [
+          Icon(Icons.eco, color: Colors.greenAccent, size: 24),
+          SizedBox(width: 8),
+          Text(
+            'EcoCalc',
+            style: GoogleFonts.poppins(
+              textStyle: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
-        ),
+        ],
       ),
-      actions: [
-        IconButton(
-          icon: Icon(Icons.info_outline, color: Colors.white),
-          onPressed: () {
-            // Show info dialog or navigate to info page
-          },
-        ),
-      ],
+      actions: [],
     );
   }
 
@@ -109,9 +109,7 @@ class FunFactPage extends StatelessWidget {
               child: _buildLogo(),
             ),
             _buildDrawerItem(context, Icons.home, 'Home'),
-            _buildDrawerItem(context, Icons.calculate, 'Calculator'),
-            _buildDrawerItem(context, Icons.info, 'About'),
-            _buildDrawerItem(context, Icons.lightbulb, 'Tips'),
+            _buildDrawerItem(context, Icons.lightbulb, 'FAQ'),
             _buildDrawerItem(context, Icons.emoji_objects, 'Fun Facts'),
           ],
         ),
@@ -142,9 +140,7 @@ class FunFactPage extends StatelessWidget {
           _buildLogo(),
           SizedBox(height: 60),
           _buildNavItem(context, Icons.home, 'Home'),
-          _buildNavItem(context, Icons.calculate, 'Calculator'),
-          _buildNavItem(context, Icons.info, 'About'),
-          _buildNavItem(context, Icons.lightbulb, 'Tips'),
+          _buildNavItem(context, Icons.lightbulb, 'FAQ'),
           _buildNavItem(context, Icons.emoji_objects, 'Fun Facts'),
         ],
       ),

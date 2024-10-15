@@ -4,6 +4,9 @@ import 'package:carbonfootprint/funfacts.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -18,27 +21,104 @@ class _HomePageState extends State<HomePage> {
   double _distance = 0;
   double _mileage = 0;
   double _carbonFootprint = 0;
+  User? _user;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeFirebase();
+  }
+
+  Future<void> _initializeFirebase() async {
+    await Firebase.initializeApp();
+    FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      setState(() {
+        _user = user;
+      });
+    });
+  }
+
+  Future<void> _signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      final GoogleSignInAuthentication? googleAuth =
+          await googleUser?.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth?.accessToken,
+        idToken: googleAuth?.idToken,
+      );
+      await FirebaseAuth.instance.signInWithCredential(credential);
+    } catch (e) {
+      print('Error signing in with Google: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('Failed to sign in with Google. Please try again.')),
+      );
+    }
+  }
+
+  Future<void> _signOut() async {
+    await FirebaseAuth.instance.signOut();
+  }
 
   void _calculateCarbonFootprint() {
+    if (_user == null) {
+      _showSignInDialog();
+      return;
+    }
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       setState(() {
         _carbonFootprint = (_distance / _mileage) * 2.31;
       });
+      _showResultDialog();
     }
   }
 
   void _navigateToFunFacts() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => FunFactPage()),
-    );
+    if (_user == null) {
+      _showSignInDialog();
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => FunFactPage()),
+      );
+    }
   }
 
-  void _navigateTofaq() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => FAQPage()),
+  void _navigateToFAQ() {
+    if (_user == null) {
+      _showSignInDialog();
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => FAQPage()),
+      );
+    }
+  }
+
+  void _showSignInDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Sign In Required'),
+          content: Text('Please sign in to access this feature.'),
+          actions: [
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            ElevatedButton(
+              child: Text('Sign In'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _signInWithGoogle();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -80,7 +160,7 @@ class _HomePageState extends State<HomePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildHeader(),
+                        _buildDesktopHeader(),
                         SizedBox(height: 40),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,6 +187,34 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildDesktopHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(child: _buildHeader()),
+        _buildUserActions(),
+      ],
+    );
+  }
+
+  Widget _buildUserActions() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (_user != null)
+          IconButton(
+            icon: Icon(Icons.logout, color: Colors.white),
+            onPressed: _signOut,
+          )
+        else
+          TextButton(
+            child: Text('Sign In', style: TextStyle(color: Colors.white)),
+            onPressed: _signInWithGoogle,
+          ),
+      ],
     );
   }
 
@@ -147,6 +255,7 @@ class _HomePageState extends State<HomePage> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
+      foregroundColor: Colors.white,
       flexibleSpace: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -157,22 +266,32 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       elevation: 0,
-      title: Text(
-        'EcoCalc',
-        style: GoogleFonts.poppins(
-          textStyle: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+      title: Row(
+        children: [
+          Icon(Icons.eco, color: Colors.greenAccent, size: 24),
+          SizedBox(width: 8),
+          Text(
+            'EcoCalc',
+            style: GoogleFonts.poppins(
+              textStyle: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
-        ),
+        ],
       ),
       actions: [
-        IconButton(
-          icon: Icon(Icons.info_outline, color: Colors.white),
-          onPressed: () {
-            // Show info dialog or navigate to info page
-          },
-        ),
+        if (_user != null)
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: _signOut,
+          )
+        else
+          TextButton(
+            child: Text('Sign In', style: TextStyle(color: Colors.white)),
+            onPressed: _signInWithGoogle,
+          ),
       ],
     );
   }
@@ -191,11 +310,14 @@ class _HomePageState extends State<HomePage> {
               child: _buildLogo(),
             ),
             _buildDrawerItem(Icons.home, 'Home'),
-            _buildDrawerItem(Icons.calculate, 'Calculator'),
-            _buildDrawerItem(Icons.info, 'About'),
-            _buildDrawerItem(Icons.lightbulb, 'FAQ', onTap: _navigateTofaq),
+            _buildDrawerItem(Icons.lightbulb, 'FAQ', onTap: _navigateToFAQ),
             _buildDrawerItem(Icons.emoji_objects, 'Fun Facts',
                 onTap: _navigateToFunFacts),
+            if (_user != null)
+              _buildDrawerItem(Icons.logout, 'Sign Out', onTap: _signOut)
+            else
+              _buildDrawerItem(Icons.login, 'Sign In',
+                  onTap: _signInWithGoogle),
           ],
         ),
       ),
@@ -224,9 +346,13 @@ class _HomePageState extends State<HomePage> {
           _buildLogo(),
           SizedBox(height: 60),
           _buildNavItem(Icons.home, 'Home'),
-          _buildNavItem(Icons.lightbulb, 'FAQ', onTap: _navigateTofaq),
+          _buildNavItem(Icons.lightbulb, 'FAQ', onTap: _navigateToFAQ),
           _buildNavItem(Icons.emoji_objects, 'Fun Facts',
               onTap: _navigateToFunFacts),
+          if (_user != null)
+            _buildNavItem(Icons.logout, 'Sign Out', onTap: _signOut)
+          else
+            _buildNavItem(Icons.login, 'Sign In', onTap: _signInWithGoogle),
         ],
       ),
     );
@@ -332,14 +458,9 @@ class _HomePageState extends State<HomePage> {
             ),
             SizedBox(height: 30),
             ElevatedButton(
-              onPressed: () {
-                _calculateCarbonFootprint();
-                _showResultDialog();
-              },
+              onPressed: _calculateCarbonFootprint,
               child: Text('Calculate'),
               style: ElevatedButton.styleFrom(
-                // primary: Colors.greenAccent,
-                // onPrimary: Colors.black87,
                 padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                 textStyle: GoogleFonts.poppins(
                   textStyle: TextStyle(

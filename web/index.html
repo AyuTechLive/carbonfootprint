@@ -24,6 +24,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="carbonfootprint">
+  <meta name="google-signin-client_id" content="1034917350535-io8hbhro47foml65jqv251cc0k867s9l.apps.googleusercontent.com">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
@@ -39,5 +40,28 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <script type="text/javascript"> window.flutterWebRenderer = "html"; </script>
+
+<script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-auth.js"></script> 
+
+<script> 
+	// paste the code copied 
+	// from Firebase SDK below. 
+	const firebaseConfig = { 
+    apiKey: 'AIzaSyA1V2zlJBpUUI8r2zJHsNvhIpwdTScfzKE',
+    appId: '1:1034917350535:web:092ed37c259bb6ee1d3c22',
+    messagingSenderId: '1034917350535',
+    projectId: 'carbonemission-612ae',
+    authDomain: 'carbonemission-612ae.firebaseapp.com',
+    storageBucket: 'carbonemission-612ae.appspot.com',
+    measurementId: 'G-GQKKQB8VCD',
+	
+	}; 
+
+	// Initialize Firebase 
+	const app = initializeApp(firebaseConfig); 
+	const analytics = getAnalytics(app); 
+	
+</script>
+
 </body>
 </html>
