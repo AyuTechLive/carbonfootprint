@@ -43,7 +43,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _initializeGeminiModel() {
-    final apiKey = 'AIzaSyBsYa9JGeAbT9UFE10UArpss1smmF1DN7g';
+    final apiKey = '';
 
     if (apiKey.isEmpty) {
       print('No GEMINI_API_KEY environment variable');
