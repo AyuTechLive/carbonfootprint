@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class HomePage extends StatefulWidget {
@@ -22,11 +23,14 @@ class _HomePageState extends State<HomePage> {
   double _mileage = 0;
   double _carbonFootprint = 0;
   User? _user;
+  late GenerativeModel _model;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _initializeFirebase();
+    _initializeGeminiModel();
   }
 
   Future<void> _initializeFirebase() async {
@@ -36,6 +40,27 @@ class _HomePageState extends State<HomePage> {
         _user = user;
       });
     });
+  }
+
+  void _initializeGeminiModel() {
+    final apiKey = 'AIzaSyBsYa9JGeAbT9UFE10UArpss1smmF1DN7g';
+
+    if (apiKey.isEmpty) {
+      print('No GEMINI_API_KEY environment variable');
+      return;
+    }
+
+    _model = GenerativeModel(
+      model: 'gemini-1.5-flash',
+      apiKey: apiKey,
+      generationConfig: GenerationConfig(
+        temperature: 1,
+        topK: 64,
+        topP: 0.95,
+        maxOutputTokens: 8192,
+        responseMimeType: 'application/json',
+      ),
+    );
   }
 
   Future<void> _signInWithGoogle() async {
@@ -61,17 +86,66 @@ class _HomePageState extends State<HomePage> {
     await FirebaseAuth.instance.signOut();
   }
 
-  void _calculateCarbonFootprint() {
+  // void _calculateCarbonFootprint() {
+  //   if (_user == null) {
+  //     _showSignInDialog();
+  //     return;
+  //   }
+  //   if (_formKey.currentState!.validate()) {
+  //     _formKey.currentState!.save();
+  //     setState(() {
+  //       _carbonFootprint = (_distance / _mileage) * 2.31;
+  //     });
+  //     _showResultDialog();
+  //   }
+  // }
+  Future<void> _calculateCarbonFootprint() async {
     if (_user == null) {
       _showSignInDialog();
       return;
     }
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+
       setState(() {
-        _carbonFootprint = (_distance / _mileage) * 2.31;
+        _isLoading = true;
       });
-      _showResultDialog();
+
+      try {
+        final chat = _model.startChat();
+        final message =
+            'Calculate carbon footprint for a car with the following details:\n'
+            'Car Model: $_carModel\n'
+            'Mileage: $_mileage km/l\n'
+            'Distance Travelled: $_distance km';
+
+        final content = Content.text(message);
+        final response = await chat.sendMessage(content);
+
+        final responseText = response.text ?? '';
+        final carbonFootprintMatch =
+            RegExp(r'(\d+(\.\d+)?)\s*kg\s*CO2').firstMatch(responseText);
+
+        if (carbonFootprintMatch != null) {
+          setState(() {
+            _carbonFootprint = double.parse(carbonFootprintMatch.group(1)!);
+            _isLoading = false;
+          });
+          _showResultDialog();
+        } else {
+          throw Exception('Unable to parse carbon footprint from response');
+        }
+      } catch (e) {
+        print('Error calculating carbon footprint: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Failed to calculate carbon footprint. Please try again.')),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -457,22 +531,26 @@ class _HomePageState extends State<HomePage> {
               onSaved: (value) => _mileage = double.parse(value!),
             ),
             SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: _calculateCarbonFootprint,
-              child: Text('Calculate'),
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                textStyle: GoogleFonts.poppins(
-                  textStyle: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+            _isLoading
+                ? Center(
+                    child: CircularProgressIndicator(color: Colors.greenAccent))
+                : ElevatedButton(
+                    onPressed: _calculateCarbonFootprint,
+                    child: Text('Calculate'),
+                    style: ElevatedButton.styleFrom(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                      textStyle: GoogleFonts.poppins(
+                        textStyle: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
                   ),
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-              ),
-            ),
           ],
         ),
       ),
