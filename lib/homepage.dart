@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:carbonfootprint/faq.dart';
 import 'package:carbonfootprint/funfacts.dart';
+import 'package:carbonfootprint/map.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -8,6 +9,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:latlong2/latlong.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -31,6 +33,37 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _initializeFirebase();
     _initializeGeminiModel();
+    // _loadCarpoolLocations();
+  }
+
+  // void _loadCarpoolLocations() {
+  //   // For demonstration, we'll add some dummy locations
+  //   _carpoolLocations = [
+  //     CarpoolLocation(
+  //       name: 'Carpool 1',
+  //       contactNumber: '123-456-7890',
+  //       location: LatLng(37.7749, -122.4194), // San Francisco
+  //     ),
+  //     CarpoolLocation(
+  //       name: 'Carpool 2',
+  //       contactNumber: '987-654-3210',
+  //       location: LatLng(37.7849, -122.4094), // Nearby location
+  //     ),
+  //     // Add more carpool locations as needed
+  //   ];
+  // }
+
+  void _navigateToCarpoolMap() {
+    if (_user == null) {
+      _showSignInDialog();
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CarpoolMapPage(),
+        ),
+      );
+    }
   }
 
   Future<void> _initializeFirebase() async {
@@ -612,6 +645,24 @@ class _HomePageState extends State<HomePage> {
               textStyle: TextStyle(
                 color: Colors.white70,
                 fontSize: 16,
+              ),
+            ),
+          ),
+          SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: _navigateToCarpoolMap,
+            child: Text('Find Carpools'),
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+              textStyle: GoogleFonts.poppins(
+                textStyle: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+                side: BorderSide(color: Colors.greenAccent),
               ),
             ),
           ),

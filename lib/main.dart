@@ -1,5 +1,6 @@
 import 'package:carbonfootprint/firebase_options.dart';
 import 'package:carbonfootprint/homepage.dart';
+import 'package:carbonfootprint/map.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
